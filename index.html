@@ -1,0 +1,1973 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Dov'è Davide?</title>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@600;800&family=Orbitron:wght@700&display=swap" rel="stylesheet">
+    <style>
+        /* --- STILI GLOBALI E RESET --- */
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; font-family: 'Nunito', sans-serif; }
+        body { 
+            background: #9ab0c7; 
+            color: white; overflow: hidden; display: flex; flex-direction: column; 
+            height: 100vh; width: 100vw; 
+        }
+        h1, h2, h3, .title-font { font-family: 'Fredoka', sans-serif; }
+        
+        /* --- MENU TOP DESTRA --- */
+        #top-menu-btn {
+            position: fixed; top: 15px; right: 15px; 
+            background: rgba(0,0,0,0.7); color: #ffd700;
+            padding: 10px 15px; border-radius: 8px; font-size: 1.5rem; 
+            z-index: 950; cursor: pointer; border: 2px solid #ffd700;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.6);
+            display: none; /* Visibile solo in-game */
+        }
+        #top-menu {
+            display: none; position: fixed; top: 65px; right: 15px; 
+            background: rgba(20,20,35,0.95); border: 2px solid #ffd700; 
+            border-radius: 10px; z-index: 950; flex-direction: column; 
+            overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+        }
+        #top-menu div {
+            padding: 15px 20px; border-bottom: 1px solid rgba(255,255,255,0.1); 
+            font-weight: bold; cursor: pointer; font-size: 1.1rem;
+            color: #fff; transition: background 0.2s;
+        }
+        #top-menu div:hover { background: rgba(255,215,0,0.2); }
+        #top-menu div:last-child { border-bottom: none; }
+
+        /* --- SCHERMATA INIZIALE --- */
+        #start-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url('schermata iniziale/SFONDO.png');
+            background-size: cover; background-position: center;
+            display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+            z-index: 100;
+        }
+        #title { 
+            width: 90%; max-width: 500px; margin-top: 8%; 
+            filter: drop-shadow(0 8px 15px rgba(0,0,0,0.8)) drop-shadow(0 0 10px rgba(255,0,0,0.5)); 
+        }
+        
+        #davola-container {
+            position: absolute; top: 30%; width: 320px; height: 320px;
+            animation: planata 6s infinite ease-in-out alternate, vibrazione 0.15s infinite linear;
+        }
+        #davola { width: 100%; height: auto; filter: drop-shadow(0 15px 15px rgba(0,0,0,0.7)); }
+        
+        #start-btn {
+            position: absolute; bottom: -40px; left: 50%; transform: translateX(-50%);
+            padding: 15px 35px; font-size: 1.6rem; font-family: 'Fredoka', sans-serif;
+            background: linear-gradient(180deg, #ffea00 0%, #ffaa00 100%);
+            color: #b30000; border: 4px solid #b30000;
+            border-radius: 30px; cursor: pointer; 
+            box-shadow: 0 8px 15px rgba(0,0,0,0.6), inset 0 -4px 0 rgba(0,0,0,0.2);
+            text-shadow: 1px 1px 0px rgba(255,255,255,0.8);
+            transition: transform 0.1s; white-space: nowrap;
+        }
+        #start-btn:active { transform: translateX(-50%) translateY(4px); box-shadow: 0 4px 10px rgba(0,0,0,0.6), inset 0 -2px 0 rgba(0,0,0,0.2); }
+
+        #audio-toggle-btn {
+            position: absolute; top: 20px; right: 20px;
+            font-size: 2.5rem; cursor: pointer; z-index: 200;
+            background: rgba(0,0,0,0.5); border-radius: 50%; width: 60px; height: 60px;
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid #ffd700; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            transition: transform 0.2s;
+        }
+        #audio-toggle-btn:active { transform: scale(0.9); }
+
+        /* --- ANIMAZIONI --- */
+        @keyframes planata {
+            0% { left: -10%; top: 22%; transform: rotate(-10deg); }
+            50% { top: 35%; transform: rotate(5deg); }
+            100% { left: 60%; top: 25%; transform: rotate(-15deg); }
+        }
+        @keyframes vibrazione {
+            0% { margin-top: 0px; margin-left: 0px; }
+            25% { margin-top: -2px; margin-left: 2px; }
+            50% { margin-top: 2px; margin-left: -2px; }
+            75% { margin-top: -2px; margin-left: -2px; }
+            100% { margin-top: 2px; margin-left: 2px; }
+        }
+        @keyframes popIn {
+            0% { transform: scale(0.3); opacity: 0; }
+            60% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        @keyframes toastFade {
+            0% { opacity: 0; transform: translateY(-20px); }
+            10% { opacity: 1; transform: translateY(0); }
+            90% { opacity: 1; transform: translateY(0); }
+            100% { opacity: 0; transform: translateY(-20px); }
+        }
+        @keyframes callHalo {
+            0% { box-shadow: 0 0 5px #9C27B0, inset 0 0 5px #9C27B0; }
+            50% { box-shadow: 0 0 25px #E040FB, inset 0 0 15px #E040FB; }
+            100% { box-shadow: 0 0 5px #9C27B0, inset 0 0 5px #9C27B0; }
+        }
+        @keyframes phoneRing {
+            0% { transform: rotate(-15deg) scale(1); }
+            50% { transform: rotate(15deg) scale(1.1); }
+            100% { transform: rotate(-15deg) scale(1); }
+        }
+        @keyframes pulseText {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .halo-animation {
+            animation: callHalo 1s infinite;
+        }
+        .binocolo-fx {
+            animation: binocoloPulse 1s infinite !important;
+            z-index: 40 !important;
+        }
+        @keyframes binocoloPulse {
+            0% { box-shadow: 0 0 15px #00f2fe, inset 0 0 15px #00f2fe; border-color: #00f2fe; }
+            50% { box-shadow: 0 0 35px #4facfe, inset 0 0 25px #4facfe; border-color: #4facfe; }
+            100% { box-shadow: 0 0 15px #00f2fe, inset 0 0 15px #00f2fe; border-color: #00f2fe; }
+        }
+        .binocolo-icon {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 2.5rem; z-index: 900; animation: popIn 0.3s ease-out;
+            pointer-events: none; text-shadow: 0 0 15px #00f2fe;
+        }
+
+        /* --- SCHERMATA DI GIOCO --- */
+        #game-screen { display: none; flex-direction: column; height: 100%; width: 100%; padding: 10px; position: relative; }
+        
+        #in-game-title {
+            text-align: center; font-family: 'Fredoka', sans-serif; font-size: 2.2rem; 
+            color: #ffd700; text-shadow: 0 4px 10px rgba(0,0,0,0.8); margin-bottom: 5px; margin-top: 5px;
+            letter-spacing: 1px; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+
+        .title-header-img {
+            height: 40px; width: auto; object-fit: contain; filter: drop-shadow(0 2px 5px rgba(0,0,0,0.5));
+        }
+
+        /* Header Statistiche */
+        #header { 
+            display: flex; justify-content: space-around; align-items: center; 
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(8px);
+            padding: 10px 15px; border-radius: 15px; margin-bottom: 5px; 
+            border: 1px solid rgba(255,255,255,0.15); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            margin-right: 50px; /* Spazio per il menu */
+        }
+        .stat { font-size: 1.1rem; color: #fff; font-weight: bold; text-shadow: 1px 1px 3px #000; display: flex; align-items: center; gap: 5px;}
+        .stat span { color: #ffd700; font-size: 1.3rem; }
+
+        /* Plancia di gioco */
+        #board-container { 
+            flex-grow: 1; display: flex; align-items: center; justify-content: center;
+            background: rgba(0,0,0,0.4); border-radius: 15px; padding: 5px; 
+            margin-bottom: 180px; overflow: hidden; position: relative;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        #board {
+            display: grid; width: 100%; max-width: 800px;
+            grid-template-columns: repeat(8, 1fr);
+            grid-template-rows: repeat(6, 1fr);
+            gap: 3px; position: relative;
+        }
+
+        /* Centro Plancia */
+        #board-center {
+            grid-column: 2 / 8;
+            grid-row: 2 / 6;
+            background-image: url("schermata iniziale/tindari.png");
+            background-size: cover; background-position: center;
+            border-radius: 10px; margin: 4px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+            z-index: 1;
+        }
+        
+        #timer-display {
+            font-family: 'Orbitron', monospace;
+            font-size: 3.2rem; color: #ff4d4d;
+            background: rgba(15, 15, 25, 0.9);
+            padding: 15px 30px; border-radius: 20px;
+            border: 3px solid #ff4d4d;
+            display: flex; align-items: center; gap: 15px;
+            box-shadow: 0 0 25px rgba(255, 77, 77, 0.6), inset 0 0 15px rgba(255, 77, 77, 0.3);
+            text-shadow: 0 0 15px rgba(255, 77, 77, 1);
+            z-index: 2;
+        }
+        
+        #timer-icon { font-size: 2.5rem; filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.6)); }
+
+        .tile {
+            aspect-ratio: 1 / 1; 
+            border: 2px solid rgba(0,0,0,0.8); background-size: cover; background-position: center;
+            position: relative; border-radius: 6px; display: flex; align-items: flex-end; justify-content: center;
+            transition: all 0.3s ease; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); background-color: #2a2a35; cursor: pointer;
+            z-index: 5;
+        }
+        .tile-name {
+            background: rgba(0,0,0,0.85); color: #fff; font-size: 0.6rem; text-align: center;
+            width: 100%; padding: 3px 0; border-bottom-left-radius: 4px; border-bottom-right-radius: 4px;
+            overflow: hidden; white-space: nowrap; text-overflow: ellipsis; display: none; line-height: 1.1;
+        }
+        .tile-level {
+            position: absolute; top: 2px; left: 2px; 
+            background: rgba(0,0,0,0.7); color: #ffd700; 
+            font-size: 0.65rem; font-weight: bold; 
+            padding: 2px 4px; border-radius: 4px; z-index: 10;
+            border: 1px solid #ffd700;
+        }
+        
+        .tile.active { 
+            transform: scale(1.4); box-shadow: 0 0 35px #ffd700, inset 0 0 20px #ffd700; 
+            z-index: 25; border-color: #ffd700; 
+        }
+        .tile.active .tile-name { display: block; white-space: normal; font-size: 0.5rem; }
+        
+        #board-container.selecting .tile { cursor: pointer; border-color: #2196F3; }
+        #board-container.selecting .tile:hover { transform: scale(1.3); z-index: 30; box-shadow: 0 0 20px #2196F3; }
+
+        .davide-reveal-img {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            object-fit: cover; z-index: 999; pointer-events: none;
+            background: rgba(0,0,0,0.7); border-radius: 6px;
+            animation: popIn 0.2s ease-out;
+        }
+
+        .player-token {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            font-size: 34px; z-index: 20; text-shadow: 0 4px 8px rgba(0,0,0,0.8);
+            display: flex; align-items: center; justify-content: center;
+            animation: popIn 0.3s ease-out;
+        }
+        .unlocked-badge {
+            position: absolute; bottom: -5px; right: -5px;
+            width: 32px; height: 32px; border-radius: 50%;
+            border: 3px solid #ffd700; box-shadow: 0 2px 8px rgba(0,0,0,0.9);
+            object-fit: cover; z-index: 15; background: #1a1a2e;
+            animation: popIn 0.3s ease-out;
+        }
+
+        #current-player { 
+            position: fixed; bottom: 15px; left: 15px;
+            display: flex; align-items: flex-end; gap: 10px; 
+            background: linear-gradient(135deg, rgba(20,20,35,0.9) 0%, rgba(40,40,65,0.9) 100%);
+            padding: 10px 15px 10px 10px; border-radius: 20px; z-index: 100;
+            border: 3px solid #ffd700; box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            backdrop-filter: blur(5px); max-width: 300px;
+        }
+        #player-icon { 
+            width: auto; height: 110px; object-fit: contain; 
+            filter: drop-shadow(0 0 10px rgba(255,215,0,0.6));
+            margin-bottom: -5px;
+        }
+        .player-info { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; }
+        #player-name { font-size: 1.6rem; font-weight: bold; color: #ffd700; font-family: 'Fredoka', sans-serif; text-shadow: 0 2px 5px rgba(0,0,0,0.8); line-height: 1; margin-bottom: 5px; }
+        #player-ability-text { font-size: 0.75rem; color: #ddd; line-height: 1.2; font-style: italic; }
+        #turn-timer { font-size: 1.2rem; font-weight: bold; color: #ff4d4d; margin-top: 5px; }
+        
+        #controls { 
+            position: fixed; bottom: 15px; right: 15px;
+            display: flex; flex-wrap: wrap; gap: 8px; width: calc(100% - 330px); max-width: 550px;
+            background: rgba(20,20,35,0.7); backdrop-filter: blur(10px);
+            padding: 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1);
+            z-index: 90; justify-content: flex-end; align-content: center;
+        }
+        
+        .btn {
+            flex: 1 1 calc(33% - 10px); padding: 10px; font-size: 0.85rem; font-weight: 800; border: none; border-radius: 10px;
+            color: white; cursor: pointer; text-align: center; font-family: 'Nunito', sans-serif;
+            text-transform: uppercase; letter-spacing: 0.5px;
+            box-shadow: 0 5px 0px rgba(0,0,0,0.4); transition: all 0.1s; min-width: 90px;
+        }
+        .btn:active:not(:disabled) { transform: translateY(5px); box-shadow: 0 0px 0px rgba(0,0,0,0.4); }
+        #btn-move { background: linear-gradient(135deg, #4CAF50, #2E7D32); }
+        #btn-unlock { background: linear-gradient(135deg, #FF9800, #EF6C00); }
+        #btn-pass { background: linear-gradient(135deg, #757575, #424242); }
+        #btn-buy-pp { background: linear-gradient(135deg, #2196F3, #1565C0); }
+        #btn-call { background: linear-gradient(135deg, #9C27B0, #6A1B9A); }
+        #btn-teleport { background: linear-gradient(135deg, #00BCD4, #00838F); } 
+        #btn-supershop { background: linear-gradient(135deg, #ff0055, #aa0033); }
+        .btn:disabled { background: #444; color: #888; box-shadow: none; transform: none; cursor: not-allowed; }
+
+        /* OVERLAY TURNO GIOCATORE */
+        #turn-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.92); z-index: 300; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        #turn-overlay-img { 
+            width: auto; height: 350px; object-fit: contain;
+            filter: drop-shadow(0 0 40px rgba(255,215,0,0.8)); margin-bottom: 25px;
+        }
+        #turn-overlay-title { color: #fff; font-size: 1.8rem; letter-spacing: 1px; margin-bottom: 10px; }
+        #turn-overlay-name { color: #ffd700; font-size: 4.5rem; font-family: 'Fredoka', sans-serif; text-shadow: 0 6px 15px rgba(0,0,0,0.9); }
+
+        /* OVERLAY CARTE MACRO-TURNO */
+        #macro-turn-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.95); z-index: 700; 
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        #macro-card-img { 
+            width: auto; height: 70vh; max-height: 600px; object-fit: contain; 
+            animation: popIn 0.5s ease-out;
+        }
+
+        /* AREA DADI */
+        #dice-area {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            display: none; gap: 40px; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            padding: 50px; border-radius: 30px; z-index: 350; border: 2px solid #555;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9);
+        }
+        .die { 
+            width: 80px; height: 80px; background: #fff; border-radius: 15px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.2), 0 10px 20px rgba(0,0,0,0.8);
+            display: grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); 
+            padding: 10px; align-items: center; justify-items: center;
+            transition: transform 0.1s linear;
+        }
+        .dot { 
+            width: 16px; height: 16px; background: #222; border-radius: 50%; 
+            box-shadow: inset 0 3px #000, 0 1px 1px rgba(255,255,255,0.7); 
+        }
+
+        /* Notifiche Toast */
+        #toast-container {
+            position: fixed; top: 120px; left: 50%; transform: translateX(-50%);
+            display: flex; flex-direction: column; gap: 10px; z-index: 1000;
+            pointer-events: none; align-items: center; width: 100%;
+        }
+        .toast {
+            background: rgba(0,0,0,0.9); color: #fff; padding: 12px 25px;
+            border-radius: 20px; border: 2px solid #ffd700; box-shadow: 0 8px 20px rgba(0,0,0,0.7);
+            font-size: 1.1rem; font-weight: bold; text-align: center;
+            animation: toastFade 4s forwards;
+        }
+
+        /* Modali */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(5px); z-index: 400; 
+            justify-content: center; align-items: center; padding: 20px;
+        }
+        .modal-box {
+            background: linear-gradient(180deg, #2b2b4a 0%, #1a1a2e 100%);
+            border: 3px solid #ffd700; border-radius: 20px; box-shadow: 0 15px 40px rgba(0,0,0,0.9);
+            padding: 25px 20px; width: 100%; max-width: 450px; text-align: center; color: white;
+            animation: popIn 0.3s ease-out forwards;
+            display: flex; flex-direction: column;
+            max-height: 90vh; overflow-y: auto;
+        }
+        
+        #modal-title { color: #ffd700; margin-bottom: 15px; font-size: 2rem; font-family: 'Fredoka'; }
+        #modal-text { margin-bottom: 25px; font-size: 1.1rem; line-height: 1.4; }
+        
+        #modal-btn { 
+            background: #ffd700; color: #111; padding: 12px 30px; font-size: 1.2rem;
+            border: none; border-radius: 10px; font-weight: bold; cursor: pointer;
+            box-shadow: 0 5px 0px #b39700; transition: all 0.1s; align-self: center;
+        }
+        #modal-btn:active { transform: translateY(5px); box-shadow: 0 0px 0px #b39700; }
+
+        .shop-item {
+            background: rgba(255,255,255,0.08); border-radius: 10px; padding: 15px; margin-bottom: 10px;
+            display: flex; flex-direction: column; gap: 10px; border: 1px solid rgba(255,215,0,0.3);
+        }
+
+        #zoomed-tile {
+            width: 70vw; max-width: 350px; aspect-ratio: 1/1; cursor: default;
+            border: 4px solid #ffd700; box-shadow: 0 0 40px rgba(0,0,0,0.9);
+            border-radius: 12px; background-size: cover; background-position: center;
+            display: flex; align-items: flex-end; justify-content: center; position: relative;
+            animation: popIn 0.3s ease-out;
+        }
+        #zoomed-tile .tile-name {
+            display: block; white-space: normal; font-size: 1.4rem; padding: 10px;
+            background: rgba(0,0,0,0.85); width: 100%; text-align: center;
+            border-bottom-left-radius: 8px; border-bottom-right-radius: 8px;
+        }
+        #zoomed-tile .tile-level {
+            font-size: 1.3rem; padding: 5px 10px; top: 10px; left: 10px;
+            background: rgba(0,0,0,0.8); border: 2px solid #ffd700;
+        }
+
+        /* Telefono squillante */
+        #phone-img-ringing {
+            width: 150px;
+            animation: phoneRing 0.15s infinite linear;
+            filter: drop-shadow(0 0 20px rgba(76, 175, 80, 0.8));
+            margin-top: 20px;
+        }
+
+        /* Responsive */
+        @media (max-width: 850px) {
+            #controls { width: 100%; left: 0; right: 0; bottom: 0; border-radius: 20px 20px 0 0; justify-content: center; max-width: 100%; gap: 6px; padding: 10px; }
+            .btn { flex: 1 1 calc(30% - 6px); padding: 8px 4px; font-size: 0.75rem; min-width: 75px; }
+            #current-player { bottom: 180px; left: 10px; padding: 8px 15px; max-width: 250px; }
+            #player-icon { height: 90px; }
+            #player-name { font-size: 1.3rem; }
+            #player-ability-text { font-size: 0.65rem; }
+            #board-container { margin-bottom: 250px; }
+            #toast-container { top: 150px; }
+            #timer-display { font-size: 2.2rem; padding: 10px 20px; }
+            #timer-icon { font-size: 1.8rem; }
+            .stat { font-size: 0.95rem; }
+            .stat span { font-size: 1.1rem; }
+            .title-header-img { height: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ELEMENTI AUDIO -->
+    <audio id="start-audio" src="schermata iniziale/schermata inizio partita.mp3" loop preload="auto"></audio>
+    <audio id="bg-music" src="suoni di gioco/SOTTOFONDO.mp3" loop preload="auto"></audio>
+    <audio id="sfx-diceroll" src="suoni di gioco/DICEROLL.mp3"></audio>
+    <audio id="sfx-pgselect" src="suoni di gioco/PGSELECT.mp3"></audio>
+    <audio id="sfx-call" src="suoni di gioco/CALL.mp3"></audio>
+    <audio id="sfx-casella" src="suoni di gioco/CASELLA.mp3"></audio>
+    <audio id="sfx-dicesuccess" src="suoni di gioco/DICESUCCESS.mp3"></audio>
+    <audio id="sfx-dicefail" src="suoni di gioco/DICEFAIL.mp3"></audio>
+    <audio id="sfx-money" src="suoni di gioco/MONEY.mp3"></audio>
+    <audio id="sfx-abilita" src="suoni di gioco/ABILITA.mp3"></audio>
+    <audio id="sfx-abilitausata" src="suoni di gioco/ABILITAUSATA.mp3"></audio>
+    <audio id="sfx-imprevisto" src="suoni di gioco/IMPREVISTO.mp3"></audio>
+    <audio id="sfx-intravisto" src="suoni di gioco/INTRAVISTO!.mp3"></audio>
+    <audio id="sfx-pausa" src="suoni di gioco/PAUSA.mp3"></audio>
+    <audio id="sfx-taxi" src="suoni di gioco/TAXI.mp3"></audio>
+    <audio id="sfx-victory" src="suoni di gioco/VICTORYa.mp3"></audio>
+    <audio id="sfx-defeat" src="suoni di gioco/SCONFITTA.mp3"></audio>
+
+    <!-- MENU ALTO A DESTRA -->
+    <div id="top-menu-btn" onclick="toggleTopMenu()">☰</div>
+    <div id="top-menu">
+        <div onclick="openInventory(); toggleTopMenu();">Carte Abilità (<span id="cards-count">0</span>)</div>
+        <div onclick="openActiveImprevisti(); toggleTopMenu();">Imprevisti Attivi (<span id="val-active-imp">0</span>)</div>
+        <div onclick="toggleMusic(); toggleTopMenu();">Musica: <span id="music-status">ON</span></div>
+        <div onclick="togglePause(); toggleTopMenu();">Pausa Gioco</div>
+    </div>
+
+    <!-- SCHERMATA INIZIALE -->
+    <div id="start-screen">
+        <div id="audio-toggle-btn" onclick="toggleStartAudio()">🔇</div>
+        <img src="schermata iniziale/TITOLO.png" id="title" alt="Dov'è Davide?">
+        <div id="davola-container">
+            <img src="schermata iniziale/DAVOLA.png" id="davola" alt="Davide">
+            <button id="start-btn" onclick="startGame()">INIZIA PARTITA</button>
+        </div>
+    </div>
+
+    <!-- OVERLAY TURNO -->
+    <div id="turn-overlay">
+        <h2 id="turn-overlay-title" class="title-font">Tocca a...</h2>
+        <img id="turn-overlay-img" src="" alt="Giocatore">
+        <h1 id="turn-overlay-name">NOME</h1>
+    </div>
+    
+    <!-- OVERLAY CARTE MACRO-TURNO -->
+    <div id="macro-turn-overlay">
+        <img id="macro-card-img" src="" alt="Carta">
+    </div>
+
+    <!-- OVERLAY TELEFONO SQUILLANTE -->
+    <div id="phone-call-overlay" class="modal-overlay" style="z-index: 800; display: none; flex-direction: column; align-items: center; justify-content: center; background: rgba(0,0,0,0.92);">
+        <h2 style="color: #ffd700; font-family: 'Fredoka', sans-serif; font-size: 2.5rem; animation: pulseText 1s infinite;">Chiamata in corso...</h2>
+        <img src="altri elem/phonecall.png" id="phone-img-ringing" alt="Telefono che squilla">
+    </div>
+
+    <!-- SCHERMATA DI GIOCO -->
+    <div id="game-screen">
+        <h1 id="in-game-title">
+            Dov'è Davide!?
+            <img src="altri elem/sitrovaqui.png" alt="Si trova qui" class="title-header-img">
+        </h1>
+        
+        <div id="header">
+            <div class="stat">Pazienza: <span id="val-pp">15</span></div>
+            <div class="stat">Soldi: <span><span id="val-money">100</span>€</span></div>
+        </div>
+
+        <div id="board-container">
+            <div id="board">
+                <!-- Sfondo centrale e orologio JS -->
+            </div>
+        </div>
+        
+        <div id="current-player">
+            <img id="player-icon" src="" alt="Icona">
+            <div class="player-info">
+                <span style="font-size: 0.8rem; color: #ccc; text-transform:uppercase;">Turno di</span>
+                <span id="player-name">Nome</span>
+                <span id="player-ability-text">Abilità del giocatore</span>
+                <span id="turn-timer">60s</span>
+            </div>
+        </div>
+
+        <!-- CONTROLLI -->
+        <div id="controls">
+            <button id="btn-move" class="btn" onclick="rollForMove()">MUOVITI</button>
+            <button id="btn-unlock" class="btn" onclick="tryUnlock()" disabled>SBLOCCA (3 PP)</button>
+            <button id="btn-pass" class="btn" onclick="passTurn()" disabled>PASSA TURNO</button>
+            <button id="btn-buy-pp" class="btn" onclick="buyPP()">PP (+2/20€)</button>
+            <button id="btn-call" class="btn" onclick="callDavide()">CHIAMA (5%)</button>
+            <button id="btn-teleport" class="btn" onclick="buyTeleport()">TAXI (70€)</button>
+            <button id="btn-supershop" class="btn" onclick="openSuperShop()">SUPER SHOP</button>
+        </div>
+
+        <div id="dice-area">
+            <div class="die" id="die1" style="transform: rotate(15deg);"></div>
+            <div class="die" id="die2" style="transform: rotate(-10deg);"></div>
+        </div>
+        
+        <div id="toast-container"></div>
+    </div>
+
+    <!-- MODALE FULL CARD VIEW -->
+    <div id="full-card-modal" class="modal-overlay" style="z-index: 999; flex-direction: column; align-items: center; justify-content: center;" onclick="this.style.display='none'">
+        <img id="full-card-img" src="" style="width: 90%; max-width: 400px; max-height: 90vh; object-fit: contain; animation: popIn 0.3s ease-out; filter: drop-shadow(0 0 20px rgba(0,0,0,0.9)); cursor: pointer;">
+        <p style="color: white; margin-top: 15px; font-weight: bold;">Tocca per chiudere</p>
+    </div>
+
+    <!-- MODALE IMPREVISTI ATTIVI -->
+    <div id="active-imprevisti-modal" class="modal-overlay" style="z-index: 460;">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="color:#ff4d4d; font-family:'Fredoka'; margin:0;">Imprevisti Attivi</h2>
+                <button onclick="document.getElementById('active-imprevisti-modal').style.display='none'" style="background:#ff4d4d; color:white; border:none; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; font-family:'Nunito'; font-size:1rem; box-shadow: 0 3px 0px #cc0000;">X</button>
+            </div>
+            <p style="font-size: 0.8rem; color: #ccc; margin-bottom: 10px;">(Clicca sull'immagine per ingrandire)</p>
+            <div id="active-imprevisti-list" style="display:flex; flex-direction:column; gap:10px; overflow-y:auto; max-height: 50vh; padding-right:5px; margin-bottom: 15px;">
+                <p style="color:#ccc;">Nessun imprevisto persistente al momento.</p>
+            </div>
+            <button onclick="document.getElementById('active-imprevisti-modal').style.display='none'" class="btn" style="background:#444; width:100%;">CHIUDI</button>
+        </div>
+    </div>
+
+    <!-- MODALE NOTIFICHE -->
+    <div id="modal" class="modal-overlay">
+        <div class="modal-box">
+            <h2 id="modal-title">Titolo</h2>
+            <div id="modal-text">Testo della notifica.</div>
+            <button id="modal-btn">CAPITO</button>
+        </div>
+    </div>
+
+    <!-- MODALE PAUSA -->
+    <div id="pause-modal" class="modal-overlay" style="z-index: 500;">
+        <div class="modal-box">
+            <h2 style="color:#ffd700; font-family:'Fredoka'; margin-bottom:15px;">GIOCO IN PAUSA</h2>
+            <p style="margin-bottom:20px; font-size:1.1rem;">I timer del gioco e del turno sono momentaneamente fermati.</p>
+            <button onclick="togglePause()" class="btn" style="background:#4CAF50; width:100%; font-size:1.2rem; padding:12px;">RIPRENDI GIOCO</button>
+        </div>
+    </div>
+
+    <!-- MODALE INVENTARIO CARTE -->
+    <div id="inventory-modal" class="modal-overlay" style="z-index: 450;">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="color:#ffd700; font-family:'Fredoka'; margin:0;">Le tue Carte</h2>
+                <button onclick="document.getElementById('inventory-modal').style.display='none'" style="background:#ff4d4d; color:white; border:none; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow: 0 3px 0px #cc0000; font-family:'Nunito'; font-size:1rem;">X</button>
+            </div>
+            <p style="font-size: 0.8rem; color: #ccc; margin-bottom: 10px;">(Clicca sull'immagine per ingrandire)</p>
+            <div id="inventory-list" style="display:flex; flex-direction:column; gap:10px; margin-bottom:15px; overflow-y:auto; max-height: 50vh; padding-right:5px;"></div>
+            <button onclick="document.getElementById('inventory-modal').style.display='none'" class="btn" style="background:#444; width:100%;">CHIUDI</button>
+        </div>
+    </div>
+
+    <!-- MODALE SUPER SHOP -->
+    <div id="supershop-modal" class="modal-overlay" style="z-index: 450;">
+        <div class="modal-box">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2 style="color:#ff0055; font-family:'Fredoka'; margin:0;">Super Abilità</h2>
+                <button onclick="document.getElementById('supershop-modal').style.display='none'" style="background:#ff4d4d; color:white; border:none; border-radius:50%; width:35px; height:35px; font-weight:bold; cursor:pointer; box-shadow: 0 3px 0px #cc0000; font-family:'Nunito'; font-size:1rem;">X</button>
+            </div>
+            
+            <div class="shop-item">
+                <strong style="color:#fff;">Downgrade Casella</strong>
+                <span style="font-size:0.85rem; color:#ccc;">Fai abbassare di due livelli una casella specifica della plancia.</span>
+                <button class="btn" style="background:#ff0055;" onclick="buySuper(1)">COMPRA (150€)</button>
+            </div>
+
+            <div class="shop-item">
+                <strong style="color:#fff;">Sblocco Istantaneo</strong>
+                <span style="font-size:0.85rem; color:#ccc;">Sblocca la casella su cui ti trovi attualmente senza tirare i dadi.</span>
+                <button class="btn" style="background:#00bcd4;" onclick="buySuper(2)">COMPRA (250€)</button>
+            </div>
+
+            <div class="shop-item">
+                <strong style="color:#fff;">Esplosione Sblocchi</strong>
+                <span style="font-size:0.85rem; color:#ccc;">Sblocca automaticamente 3 caselle bloccate casuali della mappa.</span>
+                <button class="btn" style="background:#9c27b0;" onclick="buySuper(3)">COMPRA (200€)</button>
+            </div>
+
+            <div class="shop-item">
+                <strong style="color:#fff;">Trova Carlo</strong>
+                <span style="font-size:0.85rem; color:#ccc;">Trova automaticamente Carlo senza lanciare i dadi. (Richiede 20 PP)</span>
+                <button class="btn" style="background:#ffeb3b; color:#000;" onclick="buySuper(4)">COMPRA (20 PP)</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODALE TILE ZOOM -->
+    <div id="tile-zoom-modal" class="modal-overlay" style="z-index: 600;" onclick="closeTileZoom()">
+        <div id="zoomed-tile" class="tile">
+            <div id="zoomed-tile-name" class="tile-name"></div>
+            <div id="zoomed-tile-level" class="tile-level"></div>
+        </div>
+    </div>
+
+    <!-- OVERLAY VITTORIA / SCONFITTA -->
+    <div id="end-game-overlay" class="modal-overlay" style="z-index: 1000; flex-direction: column; background: #555555;">
+        <img id="end-game-img" src="" style="width: 90%; max-width: 500px; object-fit: contain; animation: popIn 0.8s ease-out; margin-bottom: 20px;">
+        <h3 id="end-game-msg" style="color: white; margin-bottom: 30px; text-align: center; max-width: 80%; font-size: 1.2rem;"></h3>
+        <button onclick="location.reload()" class="btn" style="background: #ffd700; color: #111; font-size: 1.5rem; padding: 15px 40px;">RIGIOCA</button>
+    </div>
+
+    <script>
+        // --- HELPER EFFETTI SONORI ---
+        function playSound(id) {
+            let s = document.getElementById(id);
+            if(s) {
+                s.currentTime = 0;
+                s.play().catch(e => console.log('Audio error:', e));
+            }
+        }
+
+        let musicOn = true;
+        function toggleMusic() {
+            let bgMusic = document.getElementById('bg-music');
+            musicOn = !musicOn;
+            if (musicOn) {
+                if (!isPaused) bgMusic.play().catch(e=>console.log(e));
+                document.getElementById('music-status').innerText = 'ON';
+            } else {
+                bgMusic.pause();
+                document.getElementById('music-status').innerText = 'OFF';
+            }
+        }
+
+        // --- GESTIONE MENU ---
+        function toggleTopMenu() {
+            let m = document.getElementById('top-menu');
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        }
+
+        function viewFullCard(imgPath) {
+            document.getElementById('full-card-img').src = imgPath;
+            document.getElementById('full-card-modal').style.display = 'flex';
+        }
+
+        // --- GESTIONE AUDIO DI INIZIO E VOLUME SETUP ---
+        let isStartAudioPlaying = false;
+        function toggleStartAudio() {
+            const startAudio = document.getElementById('start-audio');
+            const toggleBtn = document.getElementById('audio-toggle-btn');
+            
+            if (isStartAudioPlaying) {
+                startAudio.pause();
+                toggleBtn.innerText = '🔇';
+            } else {
+                startAudio.play().catch(() => {});
+                toggleBtn.innerText = '🔊';
+            }
+            isStartAudioPlaying = !isStartAudioPlaying;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // Abbasso il volume di 2.5 db
+            let bgMusic = document.getElementById('bg-music');
+            if(bgMusic) bgMusic.volume = 0.75; 
+        });
+
+        // --- DATI DI GIOCO ---
+        let shuffledTileImages = [
+            'Quadrivio.png', 'Bar Di Maggio.png', 'Casella vuota.png', 'Ospedale Umberto I.png',
+            'Adolfino il re del Panino.png', 'Spacciatore.png', 'Spiaggia libera di Cefalù.png', 'Mc Donald.png',
+            'Casella vuota.png', 'Nicosia.png', 'Un cespuglio.png', 'Gioielleria.png',
+            'Bingo di Caltanissetta.png', 'Biglietteria Sais.png', 'Casella vuota.png', 'Ginisara.png',
+            'Prigione.png', 'Ristorante-Trattoria Pinocchio.png', 'S. Cristobal.png', 'Sushi San.png',
+            'Casella vuota.png', 'Tabacchino.png', 'Un sasso.png', 'Università degli studi di Enna.png'
+        ];
+        
+        let boardState = [];
+
+        let players = [
+            { id: 0, name: 'Tommaso', img: 'Giocatori/TOMMY.png', ability: 'no-repeat', abilityDesc: "Avanza automaticamente e continuamente se capita su caselle sbloccate.", rolls: 0 },
+            { id: 1, name: 'Gabriele', img: 'Giocatori/GABRIELE.png', ability: 'double-quadrivio', abilityDesc: "Guadagna il doppio dei Punti Pazienza al Quadrivio.", rolls: 0 },
+            { id: 2, name: 'Fabiana', img: 'Giocatori/FABIANA.png', ability: 'retry-unlock', abilityDesc: "Può ritentare il lancio per sbloccare una casella.", rolls: 0 },
+            { id: 3, name: 'Rebecca', img: 'Giocatori/REBECCA.png', ability: 'peek', abilityDesc: "Intravede nell'ombra e, se Davide non c'è, sblocca.", rolls: 0 },
+            { id: 4, name: 'Niccolò', img: 'Giocatori/NICCOLO\'.png', ability: 'clone', abilityDesc: "Se scade il timer del gioco ed è lui di turno, genera un clone.", rolls: 0 },
+            { id: 5, name: 'Lourdes', img: 'Giocatori/LOURDES.png', ability: 'choose-next', abilityDesc: "Vende su Vinted (50%), non esplora ma sceglie il prossimo.", rolls: 0 }
+        ];
+
+        // --- GESTIONE IMPREVISTI ATTIVI ---
+        let activeImprevistiList = [];
+        let filippaActiveCount = 0;
+
+        function addActiveImprevisto(id, name, desc, img) {
+            if(!activeImprevistiList.find(i => i.id === id)) {
+                activeImprevistiList.push({ id, name, desc, img });
+                updateActiveImprevistiUI();
+            }
+        }
+
+        function removeActiveImprevisto(id) {
+            activeImprevistiList = activeImprevistiList.filter(i => i.id !== id);
+            updateActiveImprevistiUI();
+        }
+
+        function updateActiveImprevistiUI() {
+            document.getElementById('val-active-imp').innerText = activeImprevistiList.length;
+            let list = document.getElementById('active-imprevisti-list');
+            list.innerHTML = '';
+            
+            if (activeImprevistiList.length === 0) {
+                list.innerHTML = '<p style="color:#ccc;">Nessun imprevisto persistente al momento.</p>';
+            } else {
+                activeImprevistiList.forEach((imp) => {
+                    list.innerHTML += `
+                        <div style="background:rgba(255,77,77,0.15); padding:10px; border-radius:10px; display:flex; align-items:center; text-align:left; border: 1px solid rgba(255,77,77,0.5);">
+                            <img src="carte imprevisto/IMPREVISTI/${imp.img}" style="width: 50px; border-radius: 5px; margin-right: 15px; border: 1px solid #ff4d4d; cursor: pointer;" onclick="viewFullCard('carte imprevisto/IMPREVISTI/${imp.img}')" title="Clicca per ingrandire">
+                            <div>
+                                <strong style="color:#ff4d4d;">${imp.name}</strong><br>
+                                <span style="font-size:0.8rem; color:#eee;">${imp.desc}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+        }
+
+        function openActiveImprevisti() {
+            document.getElementById('active-imprevisti-modal').style.display = 'flex';
+        }
+
+        const imprevisti = [
+            { id: 'filippa', img: "FILIPPA.IMP.png", action: () => { 
+                gameTime += 15; 
+                filippaActiveCount++;
+                addActiveImprevisto('filippa', 'Filippa', 'Penalità di +15 min al timer.', 'FILIPPA.IMP.png');
+            } },
+            { id: 'carlo', img: "CARLO.IMP.png", action: () => { 
+                carloActive = true;
+                carloPos = Math.floor(Math.random() * 24);
+                if (carloPos === 0) carloPos = 1;
+                addActiveImprevisto('carlo', 'Carlo', 'Trova anche Carlo! (Solo sblocco con dadi o Supermossa 20 PP)', 'CARLO.IMP.png');
+                showToast("CARLO È SPARITO! Ora devi trovare anche lui per vincere.");
+            } },
+            { id: 'andrea', img: "ANDREA.IMP.png", action: () => { patiencePoints -= 5; } },
+            { id: 'posticipato', img: "POSTICIPATO.IMP.png", action: () => { gameTime -= 10; } },
+            { id: 'anticipato', img: "ANTICIPATO.IMP.png", action: () => { gameTime += 10; } },
+            { id: 'spostamento', img: "SPOSTAMENTO.IMP.png", action: handleSpostamento },
+            { id: 'irreperibile', img: "IRREPERIBILE.IMP.png", action: () => { 
+                davidePhoneActive = false; 
+                addActiveImprevisto('irreperibile', 'Telefono Scarico', 'Davide è irreperibile e non risponderà alle chiamate.', 'IRREPERIBILE.IMP.png');
+            } },
+            { id: 'federico', img: "FEDERICO.IMP.png", action: () => { patiencePoints -= 4; } },
+            { id: 'colletta', img: "COLLETTA.IMP.png", action: () => { money += 50; playSound('sfx-money'); } },
+            { id: 'anita', img: "AAANITA.IMP.png", action: handleAnita }
+        ];
+
+        const abilitaCards = [
+            { id: 'lorenzo', name: "Carta Lorenzo", img: "LORENZO.AB.png", desc: "Neutralizza l'effetto dell'imprevisto Filippa." },
+            { id: 'ginevra', name: "Carta Ginevra", img: "GINNY.AB.png", desc: "La probabilità che Davide risponda sale al 20% (dura solo un turno)." },
+            { id: 'francesco', name: "Carta Francesco", img: "FRANCESCO.AB.png", desc: "Manda un messaggio minatorio. Intravedi dov'è Davide per 0.3s!" },
+            { id: 'binocolo', name: "Binocolo", img: "BINOCOLO.AB.png", desc: "Scorgi il nascondiglio! Se ne possiedi di più, il raggio visivo si somma." },
+            { id: 'ritenta', name: "Nel Chill", img: "NEL CHILL.AB.png", desc: "Tommaso e Gabriele possono sbloccare gratis." },
+            { id: 'emiliano', name: "Emiliano (o Emanuele)", img: "EMILIANO.AB.png", desc: "Aggiunge immediatamente 12 Punti Pazienza." }
+        ];
+
+        // --- VARIABILI DI STATO ---
+        let gameTime = 10 * 60 + 30;
+        let endGameTime = 12 * 60; 
+        let realTimeInterval;
+        let turnTimeInterval;
+        let currentTurnSeconds = 60;
+        let isPaused = false;
+        
+        let patiencePoints = 15;
+        let money = 100;
+        
+        let currentPlayerIndex = 0;
+        let macroTurnCounter = 0;
+        let turnsInMacro = 0;
+        
+        let collectivePos = 0;
+        let lastCollectivePos = -1;
+
+        let davidePos = -1;
+        let davideFound = false;
+        
+        let carloActive = false;
+        let carloPos = -1;
+        let carloFound = false;
+        let carloUsed = false;
+
+        let davidePhoneActive = true;
+        let davideCallChance = 0.05;
+        let hasCalledThisMacroTurn = false;
+        let hasUsedTaxiThisMacroTurn = false;
+        
+        let hasMovedThisTurn = false;
+        let hasAttemptedUnlock = false; 
+        let isOverlayActive = false;
+        let isSelectingTile = false;
+        let isSelectingTileForPeek = false;
+        let isSelectingTileForDowngrade = false;
+
+        let myCards = [];
+        let ritentaActive = false;
+        let ginevraActive = false;
+        let lourdesVintedUsed = false;
+        
+        let fabianaHasRetried = false;
+        let fabianaFreeRetry = false;
+
+        let currentModalCallback = null;
+
+        // --- PAUSA GIOCO ---
+        function togglePause() {
+            if (document.getElementById('game-screen').style.display !== 'flex') return;
+
+            isPaused = !isPaused;
+            const pauseModal = document.getElementById('pause-modal');
+            const bgMusic = document.getElementById('bg-music');
+
+            if (isPaused) {
+                playSound('sfx-pausa');
+                pauseModal.style.display = 'flex';
+                if (musicOn && bgMusic) bgMusic.pause();
+            } else {
+                pauseModal.style.display = 'none';
+                if (musicOn && bgMusic) bgMusic.play().catch(e=>console.log(e));
+            }
+        }
+
+        // --- INIZIALIZZAZIONE ---
+        function startGame() {
+            let startAudio = document.getElementById('start-audio');
+            if (startAudio) {
+                startAudio.pause();
+                startAudio.currentTime = 0;
+                isStartAudioPlaying = false;
+            }
+            
+            if (musicOn) playSound('bg-music');
+
+            document.getElementById('start-screen').style.display = 'none';
+            document.getElementById('game-screen').style.display = 'flex';
+            document.getElementById('top-menu-btn').style.display = 'block';
+            
+            buildBoard();
+            updateActiveImprevistiUI(); // Reset UI
+            
+            davidePos = Math.floor(Math.random() * 24);
+            if(davidePos === 0) davidePos = 1; 
+            davideFound = false;
+            
+            carloActive = false;
+            carloPos = -1;
+            carloFound = false;
+            carloUsed = false;
+
+            hasCalledThisMacroTurn = false;
+            hasUsedTaxiThisMacroTurn = false;
+            davideCallChance = 0.05;
+            document.getElementById('btn-call').innerText = "CHIAMA (5%)";
+            
+            realTimeInterval = setInterval(() => {
+                if(isOverlayActive || isPaused) return; 
+                gameTime++;
+                updateTimeUI();
+                if(gameTime >= endGameTime) {
+                    let p = players[currentPlayerIndex];
+                    if(p.ability === 'clone') {
+                        endGame(true, "Il timer definitivo è scaduto, ma Niccolò ha generato un clone! Pareggio, quindi VITTORIA!");
+                    } else {
+                        endGame(false, "Tempo Scaduto! I ragazzi hanno perso lo spettacolo.");
+                    }
+                }
+            }, 10000);
+            
+            showPlayerOverlayAndStart();
+        }
+
+        function showToast(message) {
+            let container = document.getElementById('toast-container');
+            let toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.innerHTML = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 4000);
+        }
+
+        function showPlayerOverlayAndStart() {
+            isOverlayActive = true;
+            clearInterval(turnTimeInterval);
+            
+            playSound('sfx-pgselect');
+            
+            let p = players[currentPlayerIndex];
+            p.rolls = 0; 
+            updateUI();
+            
+            let overlay = document.getElementById('turn-overlay');
+            document.getElementById('turn-overlay-img').src = p.img;
+            document.getElementById('turn-overlay-img').style.animation = 'none';
+            document.getElementById('turn-overlay-name').innerText = p.name;
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => { document.getElementById('turn-overlay-img').style.animation = 'popIn 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'; }, 10);
+            
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                isOverlayActive = false;
+                startTurnTimer();
+                
+                if (p.ability === 'choose-next') {
+                    showLourdesModal();
+                }
+            }, 3500);
+        }
+
+        // --- LOGICA IMPREVISTI SPECIALI ---
+        function handleSpostamento() {
+            if (!davideFound) {
+                davidePos = Math.floor(Math.random() * 24);
+                if (davidePos === 0) davidePos = 1;
+                
+                if (boardState[davidePos].unlocked) {
+                    boardState[davidePos].unlocked = false;
+                    let tileEl = document.getElementById('tile-' + davidePos);
+                    let badge = tileEl.querySelector('.unlocked-badge');
+                    if(badge) badge.remove();
+                }
+            }
+
+            if (carloActive && !carloFound) {
+                carloPos = Math.floor(Math.random() * 24);
+                if (carloPos === 0) carloPos = 1;
+
+                if (boardState[carloPos].unlocked) {
+                    boardState[carloPos].unlocked = false;
+                    let tileEl = document.getElementById('tile-' + carloPos);
+                    let badge = tileEl.querySelector('.unlocked-badge');
+                    if(badge) badge.remove();
+                }
+            }
+        }
+
+        function handleAnita() {
+            let lockedTiles = boardState.map((t, index) => ({t, index}))
+                .filter(obj => !obj.t.unlocked && 
+                               (!davideFound && obj.index !== davidePos) &&
+                               (!carloActive || carloFound || obj.index !== carloPos));
+            
+            lockedTiles.sort((a, b) => a.t.lockLevel - b.t.lockLevel);
+            let count = Math.min(3, lockedTiles.length);
+            
+            for(let i = 0; i < count; i++) {
+                let chosen = lockedTiles[i];
+                chosen.t.unlocked = true;
+                
+                let tileEl = document.getElementById('tile-' + chosen.index);
+                let badge = document.createElement('img');
+                badge.className = 'unlocked-badge';
+                badge.src = 'carte imprevisto/IMPREVISTI/AAANITA.IMP.png';
+                tileEl.appendChild(badge);
+            }
+        }
+
+        // --- GESTIONE PLANCIA ---
+        function buildBoard() {
+            const board = document.getElementById('board');
+            
+            board.innerHTML = `
+                <div id="board-center">
+                    <div id="timer-display">
+                        <span id="timer-icon">⏳</span> 
+                        <span id="timer-text">10:30</span>
+                    </div>
+                </div>
+            `;
+            
+            boardState = [];
+            
+            const gridPositions = [
+                [1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],[1,8],
+                [2,8],[3,8],[4,8],[5,8],
+                [6,8],[6,7],[6,6],[6,5],[6,4],[6,3],[6,2],[6,1],
+                [5,1],[4,1],[3,1],[2,1]
+            ];
+
+            let tileLevels = [12, 7, 8, 9, 10, 6, 8, 9, 8, 7, 10, 9, 8, 8, 7, 11, 9, 11, 7, 8, 7, 9, 8, 9];
+
+            for(let i = 0; i < 24; i++) {
+                boardState.push({
+                    lockLevel: tileLevels[i],
+                    unlocked: false
+                });
+
+                let tileDiv = document.createElement('div');
+                tileDiv.className = 'tile';
+                tileDiv.id = 'tile-' + i;
+                tileDiv.style.gridRow = gridPositions[i][0];
+                tileDiv.style.gridColumn = gridPositions[i][1];
+                tileDiv.onclick = () => tileClicked(i);
+                
+                let bgName = shuffledTileImages[i] || 'Casella vuota.png';
+                tileDiv.style.backgroundImage = `url('Caselle/${bgName}')`;
+                
+                let nameDiv = document.createElement('div');
+                nameDiv.className = 'tile-name';
+                nameDiv.innerText = bgName.replace('.png','');
+                tileDiv.appendChild(nameDiv);
+
+                let levelDiv = document.createElement('div');
+                levelDiv.className = 'tile-level';
+                levelDiv.innerText = "Lv." + boardState[i].lockLevel;
+                tileDiv.appendChild(levelDiv);
+                
+                board.appendChild(tileDiv);
+            }
+            updatePlayerTokens();
+        }
+
+        function updatePlayerTokens() {
+            document.querySelectorAll('.player-token').forEach(e => e.remove());
+            
+            let p = players[currentPlayerIndex];
+            if (p.ability === 'choose-next') return; 
+            
+            document.querySelectorAll('.tile').forEach(t => t.classList.remove('active'));
+            let tile = document.getElementById('tile-' + collectivePos);
+            
+            if(tile) {
+                tile.classList.add('active'); 
+                let token = document.createElement('div');
+                token.className = 'player-token';
+                token.innerHTML = '🎭'; 
+                tile.appendChild(token);
+            }
+        }
+
+        // --- INVENTARIO E CARTE ---
+        function updateInventoryUI() {
+            document.getElementById('cards-count').innerText = myCards.length;
+        }
+
+        function openInventory() {
+            let list = document.getElementById('inventory-list');
+            list.innerHTML = '';
+            if (myCards.length === 0) {
+                list.innerHTML = '<p>Non hai carte abilità al momento.</p>';
+            } else {
+                myCards.forEach((c, idx) => {
+                    list.innerHTML += `
+                        <div style="background:rgba(255,255,255,0.1); padding:10px; border-radius:10px; display:flex; align-items:center; text-align:left;">
+                            <img src="carte imprevisto/ABILITA'/${c.img}" style="width: 55px; border-radius: 5px; margin-right: 15px; border: 1px solid #ffd700; cursor: pointer;" onclick="viewFullCard('carte imprevisto/ABILITA\'/${c.img}')" title="Clicca per ingrandire">
+                            <div style="flex-grow:1; margin-right:10px;">
+                                <strong style="color:#ffd700;">${c.name}</strong><br>
+                                <span style="font-size:0.75rem;">${c.desc}</span>
+                            </div>
+                            <button onclick="playCard(${idx})" style="padding:8px 12px; background:#ffd700; color:black; border:none; border-radius:5px; font-weight:bold; cursor:pointer; font-family:'Nunito';">GIOCA</button>
+                        </div>
+                    `;
+                });
+            }
+            document.getElementById('inventory-modal').style.display = 'flex';
+        }
+
+        window.playCard = function(idx) {
+            let card = myCards[idx];
+            
+            if (card.id === 'lorenzo' && filippaActiveCount <= 0) {
+                showToast("Puoi usare questa carta solo per neutralizzare l'imprevisto Filippa!");
+                return;
+            }
+
+            playSound('sfx-abilitausata');
+
+            if (card.id === 'binocolo') {
+                let binocoloCount = myCards.filter(c => c.id === 'binocolo').length;
+                myCards = myCards.filter(c => c.id !== 'binocolo'); 
+                updateInventoryUI();
+                document.getElementById('inventory-modal').style.display = 'none';
+
+                let foundD = false;
+                let foundC = false;
+                let checkedTiles = [];
+
+                for (let i = 0; i <= binocoloCount; i++) {
+                    let nextPos = (collectivePos + i) % 24;
+                    checkedTiles.push(nextPos);
+                    if (!davideFound && nextPos === davidePos) foundD = true;
+                    if (carloActive && !carloFound && nextPos === carloPos) foundC = true;
+                }
+
+                checkedTiles.forEach(pos => {
+                    let el = document.getElementById('tile-' + pos);
+                    el.classList.add('binocolo-fx');
+                    
+                    let icon = document.createElement('div');
+                    icon.className = 'binocolo-icon';
+                    icon.innerHTML = '👁️';
+                    el.appendChild(icon);
+                    
+                    setTimeout(() => {
+                        el.classList.remove('binocolo-fx');
+                        if(icon.parentNode) icon.remove();
+                    }, 3500);
+                });
+
+                if (foundD || foundC) {
+                    let names = [];
+                    if(foundD) names.push("Davide");
+                    if(foundC) names.push("Carlo");
+
+                    let targetTile = document.getElementById('tile-' + (foundD ? davidePos : carloPos));
+                    let revealImg = document.createElement('img');
+                    revealImg.className = 'davide-reveal-img';
+                    revealImg.src = "altri elem/sitrovaqui.png";
+                    targetTile.appendChild(revealImg);
+                    setTimeout(() => { if (revealImg.parentNode) revealImg.remove(); }, 3500);
+
+                    showToast(`Il raggio dei tuoi binocoli (${binocoloCount}) ha fatto scorgere ${names.join(" e ")} nell'area evidenziata!`);
+                } else {
+                    showToast(`Hai ispezionato con attenzione le caselle evidenziate, ma non si nascondono lì.`);
+                }
+                return;
+            }
+
+            myCards.splice(idx, 1); 
+            updateInventoryUI();
+            document.getElementById('inventory-modal').style.display = 'none';
+
+            if (card.id === 'lorenzo') {
+               filippaActiveCount--;
+               if (filippaActiveCount === 0) removeActiveImprevisto('filippa');
+               gameTime -= 15;
+               updateTimeUI();
+               showToast("Carta Lorenzo attivata! Effetto di Filippa neutralizzato (-15 min).");
+            } else if (card.id === 'ginevra') {
+               ginevraActive = true;
+               davideCallChance = 0.20;
+               document.getElementById('btn-call').innerText = "CHIAMA (20%)";
+               showToast("Carta Ginevra: Per questo turno la chance di chiamata è al 20%.");
+            } else if (card.id === 'francesco') {
+               showToast("Messaggio minatorio inviato...");
+               triggerFrancesco();
+            } else if (card.id === 'ritenta') {
+               ritentaActive = true;
+               showToast("Carta Nel Chill attivata! Sblocco gratis per Tommaso o Gabriele.");
+            }
+        }
+
+        function triggerFrancesco() {
+            playSound('sfx-intravisto');
+            
+            let targets = [];
+            if (!davideFound) targets.push(davidePos);
+            if (carloActive && !carloFound) targets.push(carloPos);
+
+            targets.forEach(pos => {
+                let targetTile = document.getElementById('tile-' + pos);
+                let revealImg = document.createElement('img');
+                revealImg.className = 'davide-reveal-img';
+                revealImg.src = "altri elem/sitrovaqui.png";
+                targetTile.appendChild(revealImg);
+                setTimeout(() => {
+                    if(revealImg.parentNode) revealImg.remove();
+                }, 300); // 0.3s
+            });
+        }
+
+        // --- SUPER SHOP ---
+        function openSuperShop() {
+            document.getElementById('supershop-modal').style.display = 'flex';
+        }
+
+        window.buySuper = function(type) {
+            if(type === 1) { 
+                if(money < 150) return showToast("Fondi insufficienti!");
+                money -= 150; playSound('sfx-money');
+                isSelectingTileForDowngrade = true;
+                document.getElementById('board-container').classList.add('selecting');
+                showToast("Seleziona la casella di cui vuoi abbassare il livello (-2)!");
+                disableAllButtons();
+                document.getElementById('supershop-modal').style.display = 'none';
+            } 
+            else if(type === 2) { 
+                if(money < 250) return showToast("Fondi insufficienti!");
+                let currentTile = boardState[collectivePos];
+                let p = players[currentPlayerIndex];
+                
+                if(p.ability === 'choose-next' || !hasMovedThisTurn || currentTile.unlocked) {
+                    return showToast("Devi esserti mosso su una casella bloccata!");
+                }
+                
+                // Divieto sblocco istantaneo su Carlo se Davide non è lì
+                if (carloActive && collectivePos === carloPos && davidePos !== carloPos) {
+                    return showToast("Non puoi sbloccare questa casella istantaneamente. Carlo va trovato coi dadi o la Supermossa da 20 PP!");
+                }
+
+                money -= 250; playSound('sfx-money');
+                document.getElementById('supershop-modal').style.display = 'none';
+                
+                currentTile.unlocked = true;
+                forceUnlockCurrentTile(p);
+            }
+            else if(type === 3) { 
+                if(money < 200) return showToast("Fondi insufficienti!");
+
+                money -= 200; playSound('sfx-money');
+                document.getElementById('supershop-modal').style.display = 'none';
+                
+                let lockedTiles = boardState.map((t, index) => ({t, index})).filter(obj => {
+                    if (obj.t.unlocked) return false;
+                    // Divieto esplosione su Carlo se Davide non è lì
+                    if (carloActive && obj.index === carloPos && davidePos !== carloPos) return false;
+                    return true;
+                });
+
+                lockedTiles.sort(() => Math.random() - 0.5);
+                
+                let count = Math.min(3, lockedTiles.length);
+                let p = players[currentPlayerIndex];
+
+                for(let i=0; i<count; i++) {
+                    let chosen = lockedTiles[i];
+                    chosen.t.unlocked = true;
+                    
+                    let tileEl = document.getElementById('tile-' + chosen.index);
+                    let badge = document.createElement('img');
+                    badge.className = 'unlocked-badge';
+                    badge.src = p.img;
+                    tileEl.appendChild(badge);
+                }
+                showToast(`Hai automaticamente perlustrato ${count} caselle casuali!`);
+                updateUI();
+                
+                let checkArea = lockedTiles.slice(0, count);
+                let foundD = checkArea.find(obj => obj.index === davidePos);
+                let foundC = checkArea.find(obj => carloActive && obj.index === carloPos);
+
+                let namesFound = [];
+                if (foundD && !davideFound) namesFound.push("DAVIDE");
+                if (foundC && !carloFound) namesFound.push("CARLO"); 
+
+                if(namesFound.length > 0) {
+                    let tileName = shuffledTileImages[davidePos].replace('.png','');
+                    if(tileName.includes("Prigione")) {
+                        if(money >= 50) {
+                            money -= 50; playSound('sfx-money');
+                            if(foundD) davideFound = true;
+                            if(foundC) carloFound = true;
+                            
+                            if (davideFound && (!carloActive || carloFound)) {
+                                endGame(true, "Esplosione sblocchi completata. Erano in prigione, paghi 50€ e li trovi tutti!");
+                            } else {
+                                showModal("Trovato!", "Tramite l'esplosione sblocchi hai trovato " + namesFound.join(" e ") + " in prigione pagando 50€!<br>Continua la ricerca.", updateUI);
+                            }
+                        } else {
+                            showModal("Sono qui!", "Avete sbloccato le caselle, ma sono in prigione! Vi servono 50€ di cauzione, tornate coi soldi!", updateUI);
+                        }
+                    } else {
+                        if(foundD) davideFound = true;
+                        if(foundC) carloFound = true;
+                        
+                        if (davideFound && (!carloActive || carloFound)) {
+                            endGame(true, "Tramite l'esplosione sblocchi hai TROVATO " + namesFound.join(" e ") + " a " + tileName + "!");
+                        } else {
+                            showModal("Trovato!", "Tramite l'esplosione sblocchi hai trovato " + namesFound.join(" e ") + " a " + tileName + "!<br>Continua la ricerca.", updateUI);
+                        }
+                    }
+                }
+            }
+            else if (type === 4) {
+                if (!carloActive || carloFound) return showToast("Carlo non è da cercare al momento!");
+                if (patiencePoints < 20) return showToast("Punti Pazienza insufficienti! Servono 20 PP.");
+                
+                patiencePoints -= 20;
+                playSound('sfx-abilitausata');
+                document.getElementById('supershop-modal').style.display = 'none';
+                
+                carloFound = true;
+                let msgExtra = "";
+                
+                // Sblocca la casella se era bloccata
+                if (!boardState[carloPos].unlocked) {
+                    boardState[carloPos].unlocked = true;
+                    let tileEl = document.getElementById('tile-' + carloPos);
+                    let badge = document.createElement('img');
+                    badge.className = 'unlocked-badge';
+                    badge.src = players[currentPlayerIndex].img;
+                    tileEl.appendChild(badge);
+                }
+
+                if (davidePos === carloPos && !davideFound) {
+                    let tileName = shuffledTileImages[carloPos].replace('.png','');
+                    if (tileName.includes("Prigione")) {
+                        if (money >= 50) {
+                            money -= 50; playSound('sfx-money');
+                            davideFound = true;
+                            msgExtra = "<br>Inoltre, lì c'era anche Davide (hai pagato 50€ di cauzione)!";
+                        } else {
+                            msgExtra = "<br>Davide è lì in prigione, ma servono 50€ di cauzione per lui!";
+                        }
+                    } else {
+                        davideFound = true;
+                        msgExtra = "<br>Incredibile! In quello stesso posto si nascondeva anche Davide!";
+                    }
+                }
+
+                if (davideFound) {
+                    endGame(true, "Hai usato la Supermossa per trovare Carlo!" + msgExtra + " Hai trovato tutti!");
+                } else {
+                    showModal("Carlo Trovato!", "Hai speso 20 PP e trovato Carlo!" + msgExtra + "<br>Ora continua la ricerca di Davide.", updateUI);
+                }
+            }
+        }
+
+        function forceUnlockCurrentTile(p) {
+            let tileEl = document.getElementById('tile-' + collectivePos);
+            let badge = document.createElement('img');
+            badge.className = 'unlocked-badge';
+            badge.src = p.img;
+            tileEl.appendChild(badge);
+
+            let currentTileName = shuffledTileImages[collectivePos];
+            
+            let foundNames = [];
+            if (collectivePos === davidePos && !davideFound) foundNames.push("DAVIDE");
+            if (carloActive && collectivePos === carloPos && !carloFound) foundNames.push("CARLO");
+
+            if(foundNames.length > 0) {
+                if(currentTileName.includes("Prigione")) {
+                    if(money >= 50) {
+                        money -= 50; playSound('sfx-money');
+                        if(foundNames.includes("DAVIDE")) davideFound = true;
+                        if(foundNames.includes("CARLO")) carloFound = true;
+                        
+                        if (davideFound && (!carloActive || carloFound)) {
+                            endGame(true, "Sblocco Istantaneo completato. Paghi 50€ di cauzione e TROVI " + foundNames.join(" e ") + "!");
+                        } else {
+                            showModal("Trovato!", "Sblocco Istantaneo completato. Paghi 50€ di cauzione e trovi " + foundNames.join(" e ") + "!<br>Continua la ricerca.", endTurn);
+                        }
+                    } else {
+                        showModal("Li hai trovati!", "Hai sbloccato automaticamente, ma sono in prigione! Vi servono 50€ di cauzione.", endTurn);
+                    }
+                } else {
+                    if(foundNames.includes("DAVIDE")) davideFound = true;
+                    if(foundNames.includes("CARLO")) carloFound = true;
+
+                    if (davideFound && (!carloActive || carloFound)) {
+                        endGame(true, "Sblocco Istantaneo: Hai esplorato e TROVATO " + foundNames.join(" e ") + " dietro " + currentTileName.replace('.png','') + "!");
+                    } else {
+                        showModal("Trovato!", "Sblocco Istantaneo: Hai TROVATO " + foundNames.join(" e ") + "!<br>Continua la ricerca.", endTurn);
+                    }
+                }
+            } else {
+                showModal("Sblocco Istantaneo", `La casella è stata sbloccata senza dadi, ma non c'è traccia di nessuno qui.`, endTurn);
+            }
+        }
+
+        // --- DADI ---
+        function getDiceHTML(num) {
+            const empty = '<div></div>';
+            const layouts = {
+                1: [4], 2: [0, 8], 3: [0, 4, 8], 
+                4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8]
+            };
+            let html = '';
+            let dotClass = num === 1 ? 'background: #ff4d4d; box-shadow: inset 0 3px #cc0000, 0 1px 1px rgba(255,255,255,0.7);' : '';
+
+            for(let i=0; i<9; i++) {
+                if(layouts[num].includes(i)) html += `<div class="dot" style="${dotClass}"></div>`;
+                else html += empty;
+            }
+            return html;
+        }
+
+        function rollDice(duration, callback) {
+            let diceArea = document.getElementById('dice-area');
+            let d1 = document.getElementById('die1');
+            let d2 = document.getElementById('die2');
+            diceArea.style.display = 'flex';
+            
+            playSound('sfx-diceroll');
+
+            let interval = setInterval(() => {
+                d1.innerHTML = getDiceHTML(Math.floor(Math.random() * 6) + 1);
+                d2.innerHTML = getDiceHTML(Math.floor(Math.random() * 6) + 1);
+                d1.style.transform = `rotate(${Math.floor(Math.random() * 40) - 20}deg)`;
+                d2.style.transform = `rotate(${Math.floor(Math.random() * 40) - 20}deg)`;
+            }, 100);
+
+            setTimeout(() => {
+                clearInterval(interval);
+                let v1 = Math.floor(Math.random() * 6) + 1;
+                let v2 = Math.floor(Math.random() * 6) + 1;
+                
+                d1.innerHTML = getDiceHTML(v1);
+                d2.innerHTML = getDiceHTML(v2);
+                d1.style.transform = `rotate(12deg)`;
+                d2.style.transform = `rotate(-15deg)`;
+                
+                setTimeout(() => {
+                    diceArea.style.display = 'none';
+                    callback([v1, v2]);
+                }, 1200);
+            }, duration);
+        }
+
+        // --- AZIONI DI TURNO ---
+        function rollForMove() {
+            let p = players[currentPlayerIndex];
+            if(hasMovedThisTurn) return; 
+            
+            disableAllButtons();
+            
+            p.rolls++; 
+            rollDice(2500, (result) => {
+                let steps = result[0] + result[1];
+                movePlayer(steps);
+            });
+        }
+
+        function movePlayer(steps) {
+            let p = players[currentPlayerIndex];
+            lastCollectivePos = collectivePos;
+            let rebeccaTriggered = false;
+
+            for(let i=0; i<steps; i++) {
+                collectivePos++;
+                if(collectivePos >= 24) { collectivePos = 0; }
+
+                let passedTile = shuffledTileImages[collectivePos];
+                
+                if(collectivePos === 0) {
+                    let bonusPP = p.ability === 'double-quadrivio' ? 4 : 2;
+                    patiencePoints += bonusPP;
+                    showToast(`Quadrivio superato! +${bonusPP} PP.`);
+                    if(p.ability === 'peek') rebeccaTriggered = true;
+                }
+                if(passedTile.includes("Bingo")) {
+                    money += 20; playSound('sfx-money');
+                    showToast("Passando dal Bingo, hai guadagnato 20€!");
+                }
+            }
+
+            if(p.ability === 'no-repeat') {
+                let advanced = false;
+                while(boardState[collectivePos].unlocked) {
+                    collectivePos = (collectivePos + 1) % 24;
+                    advanced = true;
+                    
+                    let passedTile = shuffledTileImages[collectivePos];
+                    if(collectivePos === 0) {
+                        patiencePoints += 2;
+                        showToast(`Quadrivio superato! +2 PP.`);
+                    }
+                    if(passedTile.includes("Bingo")) {
+                        money += 20; playSound('sfx-money');
+                        showToast("Passando dal Bingo, hai guadagnato 20€!");
+                    }
+                }
+                if (advanced) {
+                    showToast("Abilità Tommaso: Hai saltato le caselle già sbloccate avanzando automaticamente.");
+                }
+            }
+
+            playSound('sfx-casella');
+            updatePlayerTokens();
+            hasMovedThisTurn = true;
+            hasAttemptedUnlock = false;
+            
+            if(rebeccaTriggered) {
+                isSelectingTileForPeek = true;
+                document.getElementById('board-container').classList.add('selecting');
+                showToast("Abilità Rebecca: Seleziona e scorgi il contenuto di una casella!");
+                disableAllButtons();
+            } else {
+                updateUI();
+            }
+        }
+
+        function buyTeleport() {
+            if(hasUsedTaxiThisMacroTurn) return showModal("Azione bloccata", "Hai già usato il Taxi in questo macro-turno!");
+            if(money < 70) return showModal("Fondi insufficienti", "Servono 70€ per il Taxi.");
+            
+            playSound('sfx-taxi');
+            money -= 70; playSound('sfx-money');
+            hasUsedTaxiThisMacroTurn = true;
+            updateUI();
+            
+            isSelectingTile = true;
+            document.getElementById('board-container').classList.add('selecting');
+            showToast("Clicca sulla casella della plancia in cui vuoi spostarti!");
+            disableAllButtons();
+        }
+
+        // --- ZOOM E CLICK CASELLE ---
+        window.showTileZoom = function(idx) {
+            let bgName = shuffledTileImages[idx] || 'Casella vuota.png';
+            let tileObj = boardState[idx];
+            let zoomedModal = document.getElementById('tile-zoom-modal');
+            let zoomedTile = document.getElementById('zoomed-tile');
+            
+            zoomedTile.style.backgroundImage = `url('Caselle/${bgName}')`;
+            document.getElementById('zoomed-tile-name').innerText = bgName.replace('.png','');
+            document.getElementById('zoomed-tile-level').innerText = "Lv." + tileObj.lockLevel;
+            
+            zoomedModal.style.display = 'flex';
+        }
+
+        window.closeTileZoom = function() {
+            document.getElementById('tile-zoom-modal').style.display = 'none';
+        }
+        
+        window.tileClicked = function(idx) {
+            if(isSelectingTileForDowngrade) {
+                isSelectingTileForDowngrade = false;
+                document.getElementById('board-container').classList.remove('selecting');
+                boardState[idx].lockLevel = Math.max(1, boardState[idx].lockLevel - 2);
+                document.getElementById('tile-' + idx).querySelector('.tile-level').innerText = "Lv." + boardState[idx].lockLevel;
+                showToast("Livello casella abbassato con successo!");
+                updateUI();
+                return;
+            }
+
+            if (isSelectingTileForPeek) {
+                isSelectingTileForPeek = false;
+                document.getElementById('board-container').classList.remove('selecting');
+                let peekName = shuffledTileImages[idx].replace('.png','');
+                
+                let foundD = (!davideFound && idx === davidePos);
+                let foundC = (carloActive && !carloFound && idx === carloPos);
+
+                if (foundD || foundC) {
+                    playSound('sfx-intravisto');
+                    let names = [];
+                    if(foundD) names.push("Davide");
+                    if(foundC) names.push("Carlo");
+                    showModal("Abilità Rebecca", `Che sesto senso spiccato! <b>${names.join(" e ")}</b> si trova/no proprio qui a <b>${peekName}</b>`, updateUI);
+                } else {
+                    let tileData = boardState[idx];
+                    if (!tileData.unlocked) {
+                        tileData.unlocked = true;
+                        let tileEl = document.getElementById('tile-' + idx);
+                        let badge = document.createElement('img');
+                        badge.className = 'unlocked-badge';
+                        badge.src = players[currentPlayerIndex].img;
+                        tileEl.appendChild(badge);
+                    }
+                    showModal("Abilità Rebecca", `Mi spiace, in <b>${peekName}</b> non c'è traccia di chi cerchi.<br><br><i>Tuttavia, l'hai perlustrata con lo sguardo: la casella si è <b>sbloccata automaticamente</b>!</i>`, updateUI);
+                }
+                return;
+            }
+
+            if(isSelectingTile) {
+                isSelectingTile = false;
+                document.getElementById('board-container').classList.remove('selecting');
+                
+                playSound('sfx-casella');
+
+                collectivePos = idx;
+                let landedTile = shuffledTileImages[idx];
+                
+                if(idx === 0) { patiencePoints += 2; showToast("Atterrato al Quadrivio! +2 Punti Pazienza."); }
+                if(landedTile.includes("Bingo")) { money += 20; playSound('sfx-money'); showToast("Atterrato al Bingo! +20€"); }
+                
+                hasMovedThisTurn = true;
+                hasAttemptedUnlock = false;
+                updatePlayerTokens();
+                updateUI();
+                showToast("Ti sei spostato sulla casella scelta!");
+                return;
+            }
+
+            showTileZoom(idx);
+        }
+
+        function tryUnlock() {
+            let p = players[currentPlayerIndex];
+            let cost = 3;
+
+            if (ritentaActive && (p.name === 'Tommaso' || p.name === 'Gabriele')) cost = 0;
+            if (fabianaFreeRetry && p.ability === 'retry-unlock') cost = 0;
+
+            if(patiencePoints < cost) return showModal("Attenzione", `Non hai abbastanza Punti Pazienza (Costo: ${cost} PP)`);
+
+            let tileData = boardState[collectivePos];
+            if(tileData.unlocked) return showModal("Già perlustrata", "Questa casella è già stata sbloccata da qualcuno!");
+
+            if (cost === 0) {
+                if (fabianaFreeRetry) {
+                    fabianaFreeRetry = false;
+                    showToast("Sblocco ritentato gratuitamente (Abilità Fabiana)!");
+                } else {
+                    ritentaActive = false;
+                    showToast("Sblocco gratuito grazie alla Carta Nel Chill!");
+                }
+            } else {
+                patiencePoints -= cost;
+            }
+            
+            hasAttemptedUnlock = true; 
+            updateUI();
+            disableAllButtons();
+
+            rollDice(2500, (result) => {
+                let sum = result[0] + result[1];
+                let success = sum >= tileData.lockLevel;
+                let title = success ? "Casella Sbloccata!" : "Sblocco Fallito";
+                let resultMsg = `I dadi hanno decretato il risultato: <b>${sum}</b> contro il Livello <b>${tileData.lockLevel}</b> della casella.<br><br>`;
+                
+                if (success) {
+                    playSound('sfx-dicesuccess');
+                    tileData.unlocked = true;
+                    let tileEl = document.getElementById('tile-' + collectivePos);
+                    let badge = document.createElement('img');
+                    badge.className = 'unlocked-badge';
+                    badge.src = p.img;
+                    tileEl.appendChild(badge);
+
+                    let currentTileName = shuffledTileImages[collectivePos].replace('.png','');
+                    
+                    let foundNames = [];
+                    if (collectivePos === davidePos && !davideFound) foundNames.push("DAVIDE");
+                    if (carloActive && collectivePos === carloPos && !carloFound) foundNames.push("CARLO");
+
+                    if (foundNames.length > 0) {
+                        if(currentTileName.includes("Prigione")) {
+                            if(money >= 50) { 
+                                money -= 50; playSound('sfx-money'); 
+                                if(foundNames.includes("DAVIDE")) davideFound = true;
+                                if(foundNames.includes("CARLO")) carloFound = true;
+                                
+                                if (davideFound && (!carloActive || carloFound)) {
+                                    endGame(true, resultMsg + "Hai pagato 50€ e FINALMENTE TROVATO " + foundNames.join(" e ") + "!");
+                                } else {
+                                    showModal("Trovato!", resultMsg + "Hai pagato 50€ e trovato " + foundNames.join(" e ") + "!<br>Ma la ricerca continua.", endTurn);
+                                }
+                            } else { 
+                                showModal("Li hai trovati!", resultMsg + "Ma sono in prigione! Cauzione da 50€ necessaria.", endTurn); 
+                            }
+                        } else {
+                            if(foundNames.includes("DAVIDE")) davideFound = true;
+                            if(foundNames.includes("CARLO")) carloFound = true;
+
+                            if (davideFound && (!carloActive || carloFound)) {
+                                endGame(true, resultMsg + "TROVATO " + foundNames.join(" e ") + " dietro " + currentTileName + "!");
+                            } else {
+                                showModal("Trovato!", resultMsg + "TROVATO " + foundNames.join(" e ") + " dietro " + currentTileName + "!<br>Ma la ricerca continua.", endTurn);
+                            }
+                        }
+                    } else {
+                        showModal(title, resultMsg + `Purtroppo non c'è traccia di chi cerchi qui.`, endTurn);
+                    }
+                } else {
+                    playSound('sfx-dicefail');
+                    if (p.ability === 'retry-unlock' && !fabianaHasRetried) {
+                        fabianaHasRetried = true;
+                        fabianaFreeRetry = true;
+                        showModal(title, resultMsg + `Non perlustrata.<br><strong>Essendo Fabiana, puoi ritentare il lancio gratis!</strong>`, () => {
+                            hasAttemptedUnlock = false; 
+                            updateUI();
+                        });
+                    } else {
+                        showModal(title, resultMsg + `Non perlustrata.`, endTurn);
+                    }
+                }
+            });
+        }
+
+        function passTurn() { endTurn(); }
+
+        function buyPP() {
+            if(money >= 20) { money -= 20; playSound('sfx-money'); patiencePoints += 2; updateUI(); }
+            else showModal("Fondi insufficienti", "Servono 20€ per 2 PP.");
+        }
+
+        function callDavide() {
+            if (davideFound) return showModal("Già Trovato!", "Davide è già con voi, ora dovete cercare Carlo!");
+
+            if(!davidePhoneActive) {
+                return showModal("Irrintracciabile", "Il telefono squilla a vuoto, Davide è irrintracciabile!");
+            }
+
+            hasCalledThisMacroTurn = true;
+            document.getElementById('btn-call').classList.remove('halo-animation');
+            document.getElementById('btn-call').disabled = true;
+            updateUI();
+
+            playSound('sfx-call');
+            document.getElementById('phone-call-overlay').style.display = 'flex';
+
+            setTimeout(() => {
+                document.getElementById('phone-call-overlay').style.display = 'none';
+                
+                if(Math.random() <= davideCallChance) {
+                    let loc = shuffledTileImages[davidePos].replace('.png','');
+                    showModal("Davide Risponde!", `"Arrivo subito ragazzi, sono andato un attimo da... ${loc}"`);
+                } else {
+                    showModal("Nessuna Risposta", "Tuuu... Tuuu... Nessuna risposta, riprova più tardi.");
+                }
+            }, 2500);
+        }
+
+        // --- ABILITÀ LOURDES ---
+        function showLourdesModal() {
+            disableAllButtons();
+            lourdesVintedUsed = false; 
+
+            let html = "<div style='display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:15px;'>";
+            players.forEach((pl) => {
+                if(pl.ability !== 'choose-next') {
+                    html += `<button onclick='lourdesChoose(${pl.id})' style='padding:10px; font-size:1rem; background:#ffd700; border:none; border-radius:8px; font-weight:bold; cursor:pointer; color:#000;'>${pl.name}</button>`;
+                }
+            });
+            html += "</div>";
+            html += `<hr style='border-color:rgba(255,255,255,0.2); margin: 20px 0;'><button id='vinted-btn' onclick='lourdesVinted()' class='btn' style='background:#00bcd4; width:100%;'>Vendi su Vinted (15€, 50% prob.)</button>`;
+            
+            document.getElementById('modal-title').innerHTML = "Abilità Lourdes";
+            document.getElementById('modal-text').innerHTML = "Lourdes non tira i dadi. Scegli chi continuerà al prossimo turno!" + html;
+            document.getElementById('modal-btn').style.display = 'none';
+            document.getElementById('modal').style.display = 'flex';
+        }
+
+        window.lourdesVinted = function() {
+            if(lourdesVintedUsed) return;
+            lourdesVintedUsed = true;
+            document.getElementById('vinted-btn').disabled = true;
+            
+            if(Math.random() < 0.50) {
+                money += 15; playSound('sfx-money');
+                showToast("Vendita su Vinted completata! +15€ guadagnati.");
+                updateUI();
+            } else {
+                showToast("Purtroppo nessuno ha comprato i vestiti su Vinted...");
+            }
+        }
+
+        window.lourdesChoose = function(id) {
+            document.getElementById('modal').style.display = 'none';
+            document.getElementById('modal-btn').style.display = 'inline-block'; 
+            
+            let lourdesIdx = players.findIndex(p => p.ability === 'choose-next');
+            let lourdes = players.splice(lourdesIdx, 1)[0];
+            
+            let newChosenIdx = players.findIndex(p => p.id === id);
+            let rotated = players.slice(newChosenIdx).concat(players.slice(0, newChosenIdx));
+            
+            rotated.push(lourdes);
+            
+            players = rotated;
+            
+            let nextIdx = 0; 
+            endTurn(nextIdx); 
+        }
+
+        function endTurn(nextIdx = null) {
+            clearInterval(turnTimeInterval);
+            
+            if (ginevraActive) {
+                ginevraActive = false;
+                davideCallChance = 0.05;
+                document.getElementById('btn-call').innerText = "CHIAMA (5%)";
+            }
+
+            turnsInMacro++;
+            if(turnsInMacro >= players.length) {
+                turnsInMacro = 0; macroTurnCounter++;
+                triggerMacroEndEvent(nextIdx);
+            } else {
+                proceedToNextTurn(nextIdx);
+            }
+        }
+
+        function proceedToNextTurn(nextIdx) {
+            if (nextIdx !== null) currentPlayerIndex = nextIdx;
+            else currentPlayerIndex = (currentPlayerIndex + 1) % players.length;
+            
+            hasMovedThisTurn = false;
+            hasAttemptedUnlock = false;
+            
+            fabianaHasRetried = false;
+            fabianaFreeRetry = false;
+            
+            showPlayerOverlayAndStart();
+        }
+
+        function startTurnTimer() {
+            clearInterval(turnTimeInterval);
+            currentTurnSeconds = 60;
+            document.getElementById('turn-timer').innerText = currentTurnSeconds + "s";
+            
+            turnTimeInterval = setInterval(() => {
+                if(isOverlayActive || isPaused) return;
+                currentTurnSeconds--;
+                document.getElementById('turn-timer').innerText = currentTurnSeconds + "s";
+                if(currentTurnSeconds <= 0) {
+                    if (hasAttemptedUnlock) return; 
+                    
+                    let p = players[currentPlayerIndex];
+                    if (p.ability === 'choose-next') {
+                        let avail = players.filter(pl => pl.ability !== 'choose-next');
+                        let randId = avail[Math.floor(Math.random() * avail.length)].id;
+                        document.getElementById('modal').style.display = 'none';
+                        document.getElementById('modal-btn').style.display = 'inline-block'; 
+                        lourdesChoose(randId);
+                    } else {
+                        endTurn();
+                    }
+                }
+            }, 1000);
+        }
+
+        function triggerMacroEndEvent(nextIdx = null) {
+            let validImprevisti = imprevisti.filter(imp => !(imp.id === 'carlo' && carloUsed));
+            let ev = validImprevisti[Math.floor(Math.random() * validImprevisti.length)];
+            if (ev.id === 'carlo') carloUsed = true;
+            
+            let availableCards = abilitaCards.filter(c => c.id === 'binocolo' || !myCards.find(mc => mc.id === c.id));
+            let cd = null;
+            if (availableCards.length > 0) {
+                cd = availableCards[Math.floor(Math.random() * availableCards.length)];
+            }
+
+            ev.action();
+            playSound('sfx-imprevisto');
+
+            hasCalledThisMacroTurn = false;
+            hasUsedTaxiThisMacroTurn = false;
+            if (!davideFound && davidePhoneActive) {
+                document.getElementById('btn-call').classList.add('halo-animation');
+            }
+            updateUI();
+
+            let overlay = document.getElementById('macro-turn-overlay');
+            let cardImg = document.getElementById('macro-card-img');
+            
+            cardImg.src = "carte imprevisto/IMPREVISTI/" + ev.img;
+            cardImg.style.filter = "drop-shadow(0 0 20px rgba(255, 77, 77, 0.8))";
+            cardImg.style.boxShadow = "none";
+            overlay.style.display = 'flex';
+            
+            setTimeout(() => {
+                if (cd) {
+                    playSound('sfx-abilita');
+                    cardImg.style.animation = 'none';
+                    void cardImg.offsetWidth; 
+                    cardImg.style.animation = 'popIn 0.5s ease-out';
+                    cardImg.src = "carte imprevisto/ABILITA'/" + cd.img;
+                    cardImg.style.filter = "drop-shadow(0 0 20px rgba(255, 215, 0, 0.8))";
+                    cardImg.style.boxShadow = "none";
+                    
+                    setTimeout(() => {
+                        overlay.style.display = 'none';
+                        if (cd.id === 'emiliano') {
+                            patiencePoints += 12;
+                            updateUI();
+                            showToast("Carta Emiliano (o Emanuele): Effetto immediato! +12 Punti Pazienza!");
+                        } else {
+                            myCards.push(cd);
+                            updateInventoryUI();
+                            showToast("Nuova carta Abilità aggiunta all'inventario!");
+                        }
+                        proceedToNextTurn(nextIdx);
+                    }, 3000);
+                } else {
+                    overlay.style.display = 'none';
+                    proceedToNextTurn(nextIdx);
+                }
+            }, 3000);
+        }
+
+        function disableAllButtons() {
+            document.querySelectorAll('#controls .btn').forEach(b => {
+                b.disabled = true;
+            });
+        }
+
+        function updateUI() {
+            if(isSelectingTile || isSelectingTileForPeek || isSelectingTileForDowngrade) return;
+            
+            document.getElementById('val-pp').innerText = patiencePoints;
+            document.getElementById('val-money').innerText = money;
+            document.getElementById('cards-count').innerText = myCards.length;
+            
+            let p = players[currentPlayerIndex];
+            document.getElementById('player-name').innerText = p.name;
+            document.getElementById('player-icon').src = p.img;
+            document.getElementById('player-ability-text').innerText = p.abilityDesc;
+            
+            let currentTile = boardState[collectivePos];
+
+            if(p.ability === 'choose-next') {
+                disableAllButtons();
+            } else {
+                let canMove = !hasMovedThisTurn; 
+                document.getElementById('btn-move').disabled = !canMove;
+                
+                document.getElementById('btn-teleport').disabled = hasUsedTaxiThisMacroTurn;
+                
+                let canUnlock = hasMovedThisTurn && currentTile && !currentTile.unlocked && !hasAttemptedUnlock; 
+                document.getElementById('btn-unlock').disabled = !canUnlock;
+
+                document.getElementById('btn-pass').disabled = !hasMovedThisTurn;
+                document.getElementById('btn-buy-pp').disabled = false;
+                document.getElementById('btn-supershop').disabled = false;
+                
+                document.getElementById('btn-call').disabled = hasCalledThisMacroTurn || !davidePhoneActive || davideFound;
+            }
+        }
+
+        function updateTimeUI() {
+            let h = Math.floor(gameTime / 60);
+            let m = gameTime % 60;
+            document.getElementById('timer-text').innerText = `${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}`;
+        }
+
+        function showModal(title, text, callback = null) {
+            document.getElementById('modal-title').innerHTML = title;
+            document.getElementById('modal-text').innerHTML = text;
+            document.getElementById('modal').style.display = 'flex';
+            
+            currentModalCallback = callback;
+
+            document.getElementById('modal-btn').onclick = () => {
+                document.getElementById('modal').style.display = 'none';
+                if(currentModalCallback) {
+                    let cb = currentModalCallback;
+                    currentModalCallback = null;
+                    cb();
+                }
+            };
+        }
+
+        function endGame(win, msg = "Tempo Scaduto! I ragazzi hanno perso lo spettacolo.") {
+            clearInterval(realTimeInterval);
+            clearInterval(turnTimeInterval);
+
+            // Ferma musica in background ed esegue suono finale
+            let bgMusic = document.getElementById('bg-music');
+            if (bgMusic) bgMusic.pause();
+            playSound(win ? 'sfx-victory' : 'sfx-defeat');
+            
+            // Proietta overlay
+            let overlay = document.getElementById('end-game-overlay');
+            let img = document.getElementById('end-game-img');
+            img.src = win ? "altri elem/vittoria.png" : "altri elem/sconfitta.png";
+            document.getElementById('end-game-msg').innerHTML = msg;
+            
+            overlay.style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
